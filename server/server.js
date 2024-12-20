@@ -3,6 +3,7 @@ const connectDB = require('./config/db');
 const path = require('path');
 const cors = require('cors');
 const axios = require('axios');
+const Web3 = require('web3'); // Import Web3
 
 const app = express();
 
@@ -24,6 +25,27 @@ app.use('/api/posts', require('./routes/api/posts'));
 app.use('/api/tokens', require('./routes/api/tokens'));
 app.use('/api/token-pairs', require('./routes/api/tokenPairs'));
 
+//this is CaptainDev API 
+app.get('/api/[CaptainDev]apitest', async (req, res) => {
+  try {
+    const web3 = new Web3('https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'); //Adress contract
+    const { contractAddress } = req.query;
+    if (!web3.utils.isAddress(contractAddress)) {
+      return res.status(400).json({ error: 'Invalid contract address' });
+    }
+    const bytecode = await web3.eth.getCode(contractAddress);
+
+    res.json({
+      contractAddress,
+      bytecode,
+      isSmartContract: bytecode !== '0x' && bytecode !== '' 
+    });
+  } catch (error) {
+    console.error('Error fetching contract information:', error.message);
+    res.status(500).json({ error: 'Failed to fetch contract information' });
+  }
+});
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   // Set static folder
@@ -36,12 +58,5 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 2001;
 
-// check_cookie();
-// const func = async () => {
-  //   const response = await axios("https://api.coinmarketcap.com/v1/ticker/?limit=0");
-  //   console.log(response.data);
-  // }
-  
-  // func();
-  
-  app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+// Start the server
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
